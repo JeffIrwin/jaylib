@@ -1,2 +1,25 @@
+
 # jaylib
-shader toy built with raylib 
+
+Shader toy built with raylib 
+
+The "jay" stands for "J"
+
+## Prerequisites
+
+I don't even know what all I had to install.  Just run it, google the errors,
+and `sudo apt install -y` until it works.
+
+- ffmpeg
+- opengl
+- various x11 and related libraries
+- cmake
+
+Raylib at least is automatically fetched via cmake
+
+## Run
+
+```
+run.sh
+```
+
