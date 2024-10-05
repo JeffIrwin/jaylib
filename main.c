@@ -6,10 +6,14 @@
 
 //const int screenWidth = 800;
 //const int screenHeight = 450;
+const int screenWidth = 1920;
+const int screenHeight = 1920;
 //const int screenWidth = 1080;
 //const int screenHeight = 1080;
-const int screenWidth = 800;
-const int screenHeight = 600;
+//const int screenWidth = 800;
+//const int screenHeight = 800;
+//const int screenWidth = 900;
+//const int screenHeight = 700;
 
 int main(void)
 {
@@ -34,7 +38,8 @@ int main(void)
     // Upload the shader uniform values!
     SetShaderValue(shader, vtimeLoc, &vtime, SHADER_UNIFORM_FLOAT);
 
-    bool showControls = true;           // Show controls
+    //bool showControls = true;
+    bool showControls = false;
 
 	const int FPS = 60;
     SetTargetFPS(FPS);
@@ -54,13 +59,8 @@ int main(void)
 	// TODO: dry up frame size, frame rate, etc.
 
 	/* initialize */
-	//avconv = popen("avconv -y -f rawvideo -s 800x600 -pix_fmt rgb24 -r 25 -i - -vf vflip -an -b:v 1000k test.mp4", "w");
-	//avconv = popen("ffmpeg -y -f rawvideo -s 800x600 -pix_fmt rgba32 -r 25 -i - -vf vflip -an -b:v 1000k test.mp4", "w");
-	//avconv = popen("ffmpeg -y -f rawvideo -s 800x600 -pix_fmt rgb24 -r 25 -i - -vf vflip -an -b:v 1000k test.mp4", "w");
-	//avconv = popen("ffmpeg -y -f rawvideo -s 800x600 -pix_fmt rgb24 -r 60 -i - -an -b:v 1000k test.mp4", "w");
-	//avconv = popen("ffmpeg -y -f rawvideo -s 800x600 -pix_fmt rgb24 -r 60 -i - -an test.mp4", "w");
 
-	avconv = popen("ffmpeg -y -f rawvideo -s 800x600 -pix_fmt rgb24 -r 60 -i - -an -pix_fmt yuv420p jaylib-0.mp4", "w");
+	avconv = popen(TextFormat("ffmpeg -y -f rawvideo -s %dx%d -pix_fmt rgb24 -r 60 -i - -an -pix_fmt yuv420p jaylib-0.mp4", screenWidth, screenHeight), "w");
 
     //--------------------------------------------------------------------------------------
 
@@ -114,42 +114,26 @@ int main(void)
 		//if (iframe == 30)
 		if (true)
 		{
-			//// Save frame as individual image to disk -- slow!
-			//TakeScreenshot("test.png");
-
-			// Save frame in memory -- faster thank disk
+			// Save frame in memory -- faster than disk
 			Image image = LoadImageFromScreen();
 
 			int w = image.width;
 			int h = image.height;
 
-			////printf("image data 0 = %x\n", image.data);
-			//printf("image data 0 = %x\n", *((int *) image.data));
-			//printf("image width  = %d\n", w);
-			//printf("image height = %d\n", h);
-			//printf("image format = %d\n", image.format);
-			//printf("\n");
-
 			// Convert pixel format
-			//ImageFormat(&image, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
 			ImageFormat(&image, PIXELFORMAT_UNCOMPRESSED_R8G8B8);
-
-			////printf("image data 0 = %x\n", *((int *) image.data));
-			//printf("image data 0 = %x\n", *((int *) (&image.data[0])));
-			//printf("image data 1 = %x\n", *((int *) (&image.data[3])));
-			//printf("image data f = %x\n", *((int *) (&image.data[3*w*h - 3])));
-			////printf("image data f = %x\n", *((int *) (&image.data)[w * h - 1]));
-			//printf("image format = %d\n", image.format);
+			//ImageFormat(&image, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
 
 			// Write the raw pixels to the ffmpeg pipe
-
-			//glReadPixels(0, 0, 800, 600, GL_RGB, GL_UNSIGNED_BYTE, pixels);
 			if (avconv)
 			{
-			    //fwrite(pixels ,800*600*3 , 1, avconv);
-			    fwrite(image.data ,800*600*3 , 1, avconv);
+				const int PIXEL_BYTES = 3;
+			    fwrite(image.data, screenWidth * screenHeight * PIXEL_BYTES, 1, avconv);
 			}
 		}
+
+		if (iframe == 600) break;
+		//if (iframe == 600) CloseWindow();
     }
 
 	/* ffmpeg video cleanup */
