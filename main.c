@@ -18,6 +18,10 @@ int main(void)
     Shader shader = LoadShader(0, "shader.glsl");
     //Shader shader = LoadShader(0, TextFormat("resources/shaders/glsl%i/julia_set.fs", GLSL_VERSION));
 
+	// TODO: how to catch shader compiler error? Happens at runtime
+	printf("shader id = %d\n", shader.id);
+	//return 0;
+
     // Create a RenderTexture2D to be used for render to texture
     RenderTexture2D target = LoadRenderTexture(GetScreenWidth(), GetScreenHeight());
 

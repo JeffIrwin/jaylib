@@ -19,8 +19,17 @@ float normal_dist(float x, float mu, float sigma)
 	return 1.f / sqrt(2 * pi * sigma2) * exp(-xmu * xmu / (2 * sigma2));
 }
 
+vec4 get_color(int hex)
+{
+	int r = (hex / 256 / 256) % 256;
+	int g = (hex / 256      ) % 256;
+	int b = (hex            ) % 256;
+	return vec4(r / 255.0f, g / 255.0f, b / 255.0f, 1.0f);
+}
+
 void main()
 {
+	// Transform to range [-1, 1] ** 2 with y up
 	float x =  (fragTexCoord.x - 0.5f) * 2.f;
 	float y = -(fragTexCoord.y - 0.5f) * 2.f;
 
@@ -40,8 +49,14 @@ void main()
 	bool above = y > y_thresh;
 
 	if (above)
-		finalColor = vec4(0.5f, 0.5f, 0.9f, 1.f);
+	{
+		//finalColor = vec4(0.5f, 0.5f, 0.9f, 1.f);
+		finalColor = get_color(0x8888ee);
+	}
 	else
-		finalColor = vec4(0.1f, 0.1f, 0.2f, 1.f);
+	{
+		//finalColor = vec4(0.1f, 0.1f, 0.2f, 1.f);
+		finalColor = get_color(0x222244);
+	}
 }
 
