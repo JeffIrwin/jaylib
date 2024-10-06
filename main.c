@@ -86,7 +86,9 @@ int main(void)
 	//
 	FILE *avconv = NULL;
 
-	/* initialize */
+	// Initialize
+	//
+	// TODO: put videos in subdir
 	avconv = popen(TextFormat("ffmpeg -y -f rawvideo -s %dx%d -pix_fmt rgb24 -r %d -i - -an -pix_fmt yuv420p jaylib-2.mp4", screenWidth, screenHeight, FPS), "w");
 
 	//--------------------------------------------------------------------------------------
@@ -95,7 +97,7 @@ int main(void)
 	while (!WindowShouldClose())
 	{
 		if (IsKeyPressed(KEY_SPACE)) iframe = 0;  // re-start animation
-		if (IsKeyPressed(KEY_F1)) showControls = !showControls;  // Toggle whether or not to show controls
+		if (IsKeyPressed(KEY_F1)) showControls = !showControls;  // toggle whether or not to show controls
 
 		// Increment time
 		vtime = dt * iframe;

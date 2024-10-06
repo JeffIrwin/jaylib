@@ -24,3 +24,17 @@ Raylib at least is automatically fetched via cmake
 run.sh
 ```
 
+### Running an archived shader
+
+To run one of the archived shaders, set `SRC_DIR` in
+[CMakeLists.txt](CMakeLists.txt):
+```
+set(SRC_DIR "./archive/2024-10-05/")
+```
+
+To run the top-level source `main.c` (and `shader.glsl` and its other dependencies), set
+`SRC_DIR` to `"."`:
+```
+set(SRC_DIR ".")
+```
+
