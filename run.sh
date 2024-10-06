@@ -3,5 +3,5 @@
 set -exu
 
 ./build.sh
-./build/jaylib
+time ./build/jaylib
 

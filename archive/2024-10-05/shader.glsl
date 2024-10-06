@@ -64,8 +64,8 @@ void main()
 	float speeds [NLAYERS] = float[](1.f, -0.8f ,  0.6f, -0.4f);
 	float sigmas [NLAYERS] = float[](0.45f, 0.35f, 0.55f, 0.425f);
 
-	//int palette[NLAYERS+1] = int[](0xCDB4DB, 0xFFC8DD, 0xFFAFCC, 0xBDE0FE, 0xA2D2FF);
-	int palette[NLAYERS+1] = int[](0xFF0000, 0xFFC8DD, 0xFFAFCC, 0xBDE0FE, 0xA2D2FF);
+	//int palette[NLAYERS] = int[](0x222244, 0x666688, 0xaaaacc);
+	int palette[NLAYERS+1] = int[](0xCDB4DB, 0xFFC8DD, 0xFFAFCC, 0xBDE0FE, 0xA2D2FF);
 
 	//bool above = y > x;
 	//bool above = y > y_thresh;
