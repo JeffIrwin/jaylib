@@ -87,7 +87,7 @@ int main(void)
 	FILE *avconv = NULL;
 
 	/* initialize */
-	avconv = popen(TextFormat("ffmpeg -y -f rawvideo -s %dx%d -pix_fmt rgb24 -r %d -i - -an -pix_fmt yuv420p jaylib-2.mp4", screenWidth, screenHeight, FPS), "w");
+	avconv = popen(TextFormat("ffmpeg -y -f rawvideo -s %dx%d -pix_fmt rgb24 -r %d -i - -an -pix_fmt yuv420p jaylib-1.mp4", screenWidth, screenHeight, FPS), "w");
 
 	//--------------------------------------------------------------------------------------
 

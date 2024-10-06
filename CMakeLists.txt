@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.11)
 project(jaylib)
 
 set(SRC_DIR "./archive/2024-10-05/")
+set(SRC_DIR "./archive/2024-10-06/")
 set(SRC_DIR ".")
 
 # Generate compile_commands.json
