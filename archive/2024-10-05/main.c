@@ -15,10 +15,10 @@
 //const int screenWidth = 1320;
 //const int screenHeight = 1320;
 
-//const int screenWidth = 1280;
-//const int screenHeight = 1280;
-const int screenWidth = 800;
-const int screenHeight = 800;
+const int screenWidth = 1280;
+const int screenHeight = 1280;
+//const int screenWidth = 800;
+//const int screenHeight = 800;
 
 //const int screenWidth = 1200;
 //const int screenHeight = 1200;

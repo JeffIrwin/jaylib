@@ -42,33 +42,23 @@ void main()
 	float x =  (fragTexCoord.x - 0.5f) * 2.f;
 	float y = -(fragTexCoord.y - 0.5f) * 2.f;
 
-	////float sigma = 1.f;
-	//float sigma = sqrt(0.2f);
+	float mu = 0.f;
 
-	//float mu0 = -1.9f;
-	float mu0 = 0.f;
+	const int NLAYERS = 5;
 
-	//float mu = 0.f;
-	//float mu = mu0 + vtime;
-	float mu = mu0;
+	//float y_trans[NLAYERS] = float[](-0.9f, -0.6f, -0.3f, 0.f);
+	float y_trans[NLAYERS] = float[](-0.9f, -0.675f, -0.45f, -0.225f, 0.f);
 
-	//float y_thresh = normal_dist(x, mu, sigma) - 0.5f;
-	//float y_thresh = normal_dist(x, mu, sigma) - 0.99f;
+	float x_trans[NLAYERS] = float[](0.f, 2.0f, 0.0f, 1.f, -1.f);
+	float sigmas [NLAYERS] = float[](0.45f, 0.35f, 0.55f, 0.4f, 0.5f);
 
-	const int NLAYERS = 4;
+	//float speeds [NLAYERS] = float[](1.2f, -0.8f ,  0.4f, -0.4f);
+	float speeds [NLAYERS] = float[](1.2f, -0.8f,  0.8f, -0.4f, 0.4f);
 
-	//float y_trans[NLAYERS] = float[](-0.99f, -0.8f, -0.6f, -0.4f);
-	float y_trans[NLAYERS] = float[](-0.9f, -0.6333f, -0.3667f, -0.1f);
-
-	float x_trans[NLAYERS] = float[](0.f, 2.0f, 0.0f, 1.f);
-	float speeds [NLAYERS] = float[](1.f, -0.8f ,  0.6f, -0.4f);
-	float sigmas [NLAYERS] = float[](0.45f, 0.35f, 0.55f, 0.425f);
-
+	// There's an extra palette entry for the stationary background layer
+	int palette[NLAYERS+1] = int[](0xD8E2DC, 0xFFFFFF, 0xFFCAD4, 0xF4ACB7, 0x9D8189, 0xD8E2DC);
+	//int palette[NLAYERS+1] = int[](0x0A9396, 0x94D2BD, 0xE9D8A6, 0xEE9B00, 0xCA6702, 0xBB3E03);
 	//int palette[NLAYERS+1] = int[](0xCDB4DB, 0xFFC8DD, 0xFFAFCC, 0xBDE0FE, 0xA2D2FF);
-	int palette[NLAYERS+1] = int[](0xFF0000, 0xFFC8DD, 0xFFAFCC, 0xBDE0FE, 0xA2D2FF);
-
-	//bool above = y > x;
-	//bool above = y > y_thresh;
 
 	for (int i = 0; i < NLAYERS; i++)
 	{
@@ -91,16 +81,5 @@ void main()
 		}
 	}
 	finalColor = get_color(palette[NLAYERS]);
-
-	//if (above)
-	//{
-	//	//finalColor = vec4(0.5f, 0.5f, 0.9f, 1.f);
-	//	finalColor = get_color(0x8888ee);
-	//}
-	//else
-	//{
-	//	//finalColor = vec4(0.1f, 0.1f, 0.2f, 1.f);
-	//	finalColor = get_color(0x222244);
-	//}
 }
 

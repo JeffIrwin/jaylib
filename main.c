@@ -15,10 +15,12 @@
 //const int screenWidth = 1320;
 //const int screenHeight = 1320;
 
-//const int screenWidth = 1280;
-//const int screenHeight = 1280;
-const int screenWidth = 800;
-const int screenHeight = 800;
+const int screenWidth = 1280;
+const int screenHeight = 1280;
+const int FPS = 60;
+//const int screenWidth = 800;
+//const int screenHeight = 800;
+//const int FPS = 30;
 
 //const int screenWidth = 1200;
 //const int screenHeight = 1200;
@@ -34,7 +36,6 @@ int main(void)
 	// Load shader file relative to the path of this C source file.  This will
 	// break if you compile and then move the shader
 
-	//char* this_dir = __FILE__;
 	char* this_file = __FILE__;
 	char* slash = strrchr(this_file, '/');
 
@@ -71,7 +72,6 @@ int main(void)
 	//bool showControls = true;
 	bool showControls = false;
 
-	const int FPS = 60;
 	SetTargetFPS(FPS);
 
 	float dt = 1.f / FPS;
@@ -86,10 +86,8 @@ int main(void)
 	//
 	FILE *avconv = NULL;
 
-	// TODO: dry up frame rate
-
 	/* initialize */
-	avconv = popen(TextFormat("ffmpeg -y -f rawvideo -s %dx%d -pix_fmt rgb24 -r 60 -i - -an -pix_fmt yuv420p jaylib-1.mp4", screenWidth, screenHeight), "w");
+	avconv = popen(TextFormat("ffmpeg -y -f rawvideo -s %dx%d -pix_fmt rgb24 -r %d -i - -an -pix_fmt yuv420p jaylib-1.mp4", screenWidth, screenHeight, FPS), "w");
 
 	//--------------------------------------------------------------------------------------
 
@@ -136,6 +134,9 @@ int main(void)
 		EndDrawing();
 		//----------------------------------------------------------------------------------
 
+		// TODO: add a "dry run" mode that skips ffmpeg export and only renders
+		// to screen.  Also skip ffmpeg init and cleanup
+
 		//if (iframe == 30)
 		if (true)
 		{
@@ -145,7 +146,8 @@ int main(void)
 			int w = image.width;
 			int h = image.height;
 
-			// Convert pixel format
+			// Convert pixel format.  TODO: is yuv420 available in raylib?  Then
+			// we could skip an extra transcoding step
 			ImageFormat(&image, PIXELFORMAT_UNCOMPRESSED_R8G8B8);
 			//ImageFormat(&image, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
 
@@ -157,8 +159,11 @@ int main(void)
 			}
 		}
 
-		if (iframe == 600) break;
-		//if (iframe == 600) CloseWindow();
+		const size_t NFRAMES = 10 * FPS;
+		if (iframe == NFRAMES) break;
+		//if (iframe == NFRAMES - 1) break;
+
+		//if (iframe == NFRAMES) CloseWindow();
 	}
 
 	/* ffmpeg video cleanup */
