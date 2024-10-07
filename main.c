@@ -1,33 +1,39 @@
 
 #include <stddef.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "raylib.h"
 
-//const int screenWidth = 1920;
-//const int screenHeight = 1920;
-//const int screenWidth = 1440;
-//const int screenHeight = 1440;
-//const int screenWidth = 1400;
-//const int screenHeight = 1400;
-//const int screenWidth = 1360;
-//const int screenHeight = 1360;
-//const int screenWidth = 1320;
-//const int screenHeight = 1320;
+// Toggle between 0 (false) and 1 (true)
+#define HI_RES \
+0
 
-const int screenWidth = 1280;
-const int screenHeight = 1280;
-const int FPS = 60;
-//const int screenWidth = 800;
-//const int screenHeight = 800;
-//const int FPS = 30;
+#if HI_RES
+	// Somewhere between 1400 and 1440, threads.net compression will kick in and
+	// make higher resolutions look like garbage.  1280 is safely below this
+	// threshold
+	const int screenWidth = 1280;
+	const int screenHeight = 1280;
+	const int FPS = 60;
+#else
+	const int screenWidth = 800;
+	const int screenHeight = 800;
+	const int FPS = 30;
+#endif
 
-//const int screenWidth = 1200;
-//const int screenHeight = 1200;
-//const int screenWidth = 1080;
-//const int screenHeight = 1080;
-//const int screenWidth = 900;
-//const int screenHeight = 700;
+//****************
+
+#define ESC "\033"
+#define GREEN   ESC "[92m"
+#define MAGENTA ESC "[95m"
+#define RED     ESC "[91;1m"
+#define RESET   ESC "[0m"
+
+#define ERROR RED "Error: "
+
+//****************
 
 int main(void)
 {
@@ -40,25 +46,43 @@ int main(void)
 	char* slash = strrchr(this_file, '/');
 
 	size_t len = slash - this_file;
-	printf("len = %d\n", len);
+	printf("len = %ld\n", len);
 
 	char* this_dir = malloc(len + 1);
 	*this_dir = '\0';
 	strncat(this_dir, this_file, len);
 
-	char* shader_file = TextFormat("%s/shader.glsl", this_dir);
+	const char* shader_file = TextFormat("%s/shader.glsl", this_dir);
 
 	printf("this_dir = %s\n", this_dir);
 	printf("shader_file = %s\n", shader_file);
 	printf("\n");
 
-	Shader shader = LoadShader(0, shader_file);
+	const char* shader_text = LoadFileText(shader_file);
+	//printf("shader_text = \n%s\n", shader_text);
+	//printf("shader_text = \"%s\"\n", shader_text);
+	//printf("shader len = %d\n", strlen(shader_text));
+	//if (strcmp(shader_text, "(null)") == 0)
+	if (shader_text == NULL)
+	{
+		printf(ERROR "cannot load shader file \"%s\"\n" RESET, shader_file);
+		return EXIT_FAILURE;
+	}
 
-	// TODO: how to catch shader compiler error? Happens at runtime
+	//// LoadShader() does not throw an error if shader_file does not exist
+	//Shader shader = LoadShader(0, shader_file);
+	Shader shader = LoadShaderFromMemory(0, shader_text);
+
 	printf("shader id = %d\n", shader.id);
 
 	// Always true, even if shader file doesn't exist
-	printf("shader ready = %b\n", IsShaderReady(shader));
+	bool ready = IsShaderReady(shader);
+	printf("shader ready = %d\n", ready);
+	if (!ready)
+	{
+		printf(ERROR "cannot compile shader program from file \"%s\"\n" RESET, shader_file);
+		return EXIT_FAILURE;
+	}
 
 	//return 0;
 
@@ -173,16 +197,16 @@ int main(void)
 		//if (iframe == NFRAMES) CloseWindow();
 	}
 
-	/* ffmpeg video cleanup */
+	// ffmpeg video cleanup
 	if (avconv)
 		pclose(avconv);
 
-	// Raylib de-initialization
+	// raylib de-initialization
 	UnloadShader(shader);
 	UnloadRenderTexture(target);
-
 	CloseWindow();
 
+	printf(GREEN "Finished jaylib\n" RESET);
 	return 0;
 }
 
