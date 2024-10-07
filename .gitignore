@@ -2,5 +2,6 @@
 /build/
 /scratch/
 
-*.mp4
+/screenshots/*.png
+/videos/*.mp4
 

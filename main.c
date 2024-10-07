@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>  // mkdir
+#include <time.h>
 
 #include "raylib.h"
 
@@ -48,10 +50,37 @@
 
 //****************
 
+//==============================================================================
+
+char* get_date()
+{
+	// Return date in format "yyyy-mm-dd" (%F)
+	const size_t len = 16;//32;
+
+	//char buffer[80];
+	//char buffer[32];
+	char* buffer = malloc(len);
+
+	time_t rawtime;
+	struct tm *timeinfo;
+	time(&rawtime);
+	timeinfo = localtime(&rawtime);
+	//printf("size = %d\n", sizeof(buffer));
+	strftime(buffer, len, "%F", timeinfo);
+
+	//printf("buffer = %s\n", buffer);
+	return buffer;
+}
+
+//==============================================================================
+
 int main(void)
 {
 	printf("\n");
-	printf(MAGENTA_ANSI "starting " ME " " JAYLIB_VERS " main\n" RESET_ANSI);
+	printf(MAGENTA_ANSI "Starting " ME " " JAYLIB_VERS " main\n" RESET_ANSI);
+
+	char* date = get_date();
+	printf("Current date = %s\n", date);
 	printf("\n");
 
 	InitWindow(WIDTH, HEIGHT, ME);
@@ -120,13 +149,17 @@ int main(void)
 	printf("dt = %e\n", dt);
 	size_t iframe = 0;
 
+	const size_t NFRAMES = 10 * FPS;
+
 	//--------------------------------------------------------------------------------------
 
-	const char* outdir = "videos";
-	mkdir(outdir, 0700);
+	const char* outdir     = "videos";
+	const char* outdir_img = "screenshots";
+	mkdir(outdir    , 0700);
+	mkdir(outdir_img, 0700);
 
-	// TODO: name "yyyy-mm-dd" to match archived source
-	const char* outfile = TextFormat("%s/%s-3.mp4", outdir, ME);
+	const char* outfile = TextFormat("%s/%s--%s.mp4", outdir    , ME, date);
+	const char* outimg  = TextFormat("%s/%s--%s.png", outdir_img, ME, date);
 
 	// This is some crazy magic.  Open a pipe into ffmpeg to stream a video
 	//
@@ -165,7 +198,7 @@ int main(void)
 		// Draw
 		//----------------------------------------------------------------------------------
 		BeginTextureMode(target);    // Enable drawing to texture
-			// TODO: parametirez bg color
+			// TODO: parameterize bg color
 			ClearBackground(WHITE);
 
 			// Draw a rectangle in shader mode to be used as shader canvas
@@ -203,9 +236,10 @@ int main(void)
 			// Save frame in memory -- faster than disk
 			Image image = LoadImageFromScreen();
 
-			// TODO: save (at least) 1 screenshot (optionally?).  This will be
-			// nice for organizational and archival purposes -- e.g. what the
-			// hell have i rendered so far and which program does what?
+			if (iframe == NFRAMES / 2)
+			{
+				bool io = ExportImage(image, outimg);
+			}
 
 			int w = image.width;
 			int h = image.height;
@@ -223,7 +257,6 @@ int main(void)
 			}
 		}
 
-		const size_t NFRAMES = 10 * FPS;
 		if (iframe == NFRAMES)
 		//if (iframe == NFRAMES - 1)
 		{
