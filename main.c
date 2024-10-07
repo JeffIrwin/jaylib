@@ -10,7 +10,7 @@
 
 // Toggle between 0 (false) and 1 (true)
 #define HI_RES \
-0
+1
 
 #if HI_RES
 	// Somewhere between 1400 and 1440, threads.net compression will kick in and

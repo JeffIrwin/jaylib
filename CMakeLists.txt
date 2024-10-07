@@ -2,6 +2,8 @@
 cmake_minimum_required(VERSION 3.11)
 project(jaylib)
 
+# Maybe set the date as a -D def and pass to main.c to override usual get_date()
+# method?
 set(SRC_DIR "./archive/2024-10-05/")
 set(SRC_DIR "./archive/2024-10-06/")
 set(SRC_DIR "./archive/2024-10-07/")

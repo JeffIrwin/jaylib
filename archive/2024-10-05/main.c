@@ -1,59 +1,131 @@
 
 #include <stddef.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>  // mkdir
+#include <time.h>
 
 #include "raylib.h"
 
-//const int screenWidth = 1920;
-//const int screenHeight = 1920;
-//const int screenWidth = 1440;
-//const int screenHeight = 1440;
-//const int screenWidth = 1400;
-//const int screenHeight = 1400;
-//const int screenWidth = 1360;
-//const int screenHeight = 1360;
-//const int screenWidth = 1320;
-//const int screenHeight = 1320;
+// Toggle between 0 (false) and 1 (true)
+#define HI_RES \
+1
 
-const int screenWidth = 1280;
-const int screenHeight = 1280;
-//const int screenWidth = 800;
-//const int screenHeight = 800;
+#if HI_RES
+	// Somewhere between 1400 and 1440, threads.net compression will kick in and
+	// make higher resolutions look like garbage.  1280 is safely below this
+	// threshold
+	const int WIDTH  = 1280;
+	const int HEIGHT = 1280;
+	const int FPS = 60;
+#else
+	const int WIDTH  = 800;
+	const int HEIGHT = 800;
+	const int FPS = 30;
+#endif
 
-//const int screenWidth = 1200;
-//const int screenHeight = 1200;
-//const int screenWidth = 1080;
-//const int screenHeight = 1080;
-//const int screenWidth = 900;
-//const int screenHeight = 700;
+#define ME "jaylib"
+
+#define STR_HELPER(x) #x
+#define STR(x) STR_HELPER(x)
+
+#define JAYLIB_MAJOR 0
+#define JAYLIB_MINOR 1
+#define JAYLIB_PATCH 0
+#define JAYLIB_VERS STR(JAYLIB_MAJOR) "." STR(JAYLIB_MINOR) "." STR(JAYLIB_PATCH)
+
+//****************
+
+// These are suffixed with "_ANSI" to avoid clashing with raylib macros
+#define ESC "\033"
+#define GREEN_ANSI   ESC "[92m"
+#define MAGENTA_ANSI ESC "[95m"
+#define RED_ANSI     ESC "[91;1m"
+#define YELLOW_ANSI  ESC "[93;1m"
+#define RESET_ANSI   ESC "[0m"
+
+#define WARNING YELLOW_ANSI "Warning: "
+#define ERROR RED_ANSI "Error: "
+
+//****************
+
+//==============================================================================
+
+char* get_date()
+{
+	// Return date in format "yyyy-mm-dd" (%F)
+	const size_t len = 16;//32;
+
+	//char buffer[80];
+	//char buffer[32];
+	char* buffer = malloc(len);
+
+	time_t rawtime;
+	struct tm *timeinfo;
+	time(&rawtime);
+	timeinfo = localtime(&rawtime);
+	//printf("size = %d\n", sizeof(buffer));
+	strftime(buffer, len, "%F", timeinfo);
+
+	//printf("buffer = %s\n", buffer);
+	return buffer;
+}
+
+//==============================================================================
 
 int main(void)
 {
-	InitWindow(screenWidth, screenHeight, "jaylib");
+	printf("\n");
+	printf(MAGENTA_ANSI "Starting " ME " " JAYLIB_VERS " main\n" RESET_ANSI);
+
+	char* date = get_date();
+	printf("Current date = %s\n", date);
+	printf("\n");
+
+	InitWindow(WIDTH, HEIGHT, ME);
 
 	// Load shader file relative to the path of this C source file.  This will
 	// break if you compile and then move the shader
 
-	//char* this_dir = __FILE__;
 	char* this_file = __FILE__;
 	char* slash = strrchr(this_file, '/');
 
 	size_t len = slash - this_file;
-	printf("len = %d\n", len);
+	printf("len = %ld\n", len);
 
-	char* this_dir = malloc(len);
-	strncpy(this_dir, this_file, len);
+	char* this_dir = malloc(len + 1);
+	*this_dir = '\0';
+	strncat(this_dir, this_file, len);
 
-	char* shader_file = TextFormat("%s/shader.glsl", this_dir);
+	const char* shader_file = TextFormat("%s/shader.glsl", this_dir);
 
 	printf("this_dir = %s\n", this_dir);
 	printf("shader_file = %s\n", shader_file);
 	printf("\n");
 
-	Shader shader = LoadShader(0, shader_file);
+	char* shader_text = LoadFileText(shader_file);
+	if (shader_text == NULL)
+	{
+		printf(ERROR "cannot load shader file \"%s\"\n" RESET_ANSI, shader_file);
+		return EXIT_FAILURE;
+	}
 
-	// TODO: how to catch shader compiler error? Happens at runtime
+	//// LoadShader() does not throw an error if shader_file does not exist
+	//Shader shader = LoadShader(0, shader_file);
+	Shader shader = LoadShaderFromMemory(0, shader_text);
+
 	printf("shader id = %d\n", shader.id);
+
+	// Always true, even if shader file doesn't exist
+	bool ready = IsShaderReady(shader);
+	printf("shader ready = %d\n", ready);
+	if (!ready)
+	{
+		printf(ERROR "cannot compile shader program from file \"%s\"\n" RESET_ANSI, shader_file);
+		return EXIT_FAILURE;
+	}
+
 	//return 0;
 
 	// Create a RenderTexture2D to be used for render to texture
@@ -68,28 +140,46 @@ int main(void)
 	// Upload the shader uniform values
 	SetShaderValue(shader, vtimeLoc, &vtime, SHADER_UNIFORM_FLOAT);
 
-	//bool showControls = true;
-	bool showControls = false;
+	bool show_controls = false;
+	bool normal_close  = false;
 
-	const int FPS = 60;
 	SetTargetFPS(FPS);
 
 	float dt = 1.f / FPS;
 	printf("dt = %e\n", dt);
 	size_t iframe = 0;
 
+	const size_t NFRAMES = 10 * FPS;
+
 	//--------------------------------------------------------------------------------------
+
+	const char* outdir     = "videos";
+	const char* outdir_img = "screenshots";
+	mkdir(outdir    , 0700);
+	mkdir(outdir_img, 0700);
+
+	const char* outfile = TextFormat("%s/%s--%s.mp4", outdir    , ME, date);
+	const char* outimg  = TextFormat("%s/%s--%s.png", outdir_img, ME, date);
 
 	// This is some crazy magic.  Open a pipe into ffmpeg to stream a video
 	//
 	// Ref:  https://stackoverflow.com/a/25921244/4347028
 	//
-	FILE *avconv = NULL;
+	FILE *ffmpeg = NULL;
 
-	// TODO: dry up frame rate
-
-	/* initialize */
-	avconv = popen(TextFormat("ffmpeg -y -f rawvideo -s %dx%d -pix_fmt rgb24 -r 60 -i - -an -pix_fmt yuv420p jaylib-1.mp4", screenWidth, screenHeight), "w");
+	// initialize ffmpeg
+	ffmpeg = popen(TextFormat(
+			"ffmpeg -y -f rawvideo "
+			" -s %dx%d "
+			" -pix_fmt rgb24 "  // note this relates to raylib PIXELFORMAT ImageFormat below
+			" -r %d -i - -an "
+			" -pix_fmt yuv420p "
+			" %s ",
+			WIDTH,
+			HEIGHT,
+			FPS,
+			outfile
+	), "w");
 
 	//--------------------------------------------------------------------------------------
 
@@ -97,7 +187,7 @@ int main(void)
 	while (!WindowShouldClose())
 	{
 		if (IsKeyPressed(KEY_SPACE)) iframe = 0;  // re-start animation
-		if (IsKeyPressed(KEY_F1)) showControls = !showControls;  // Toggle whether or not to show controls
+		if (IsKeyPressed(KEY_F1)) show_controls = !show_controls;  // toggle whether or not to show controls
 
 		// Increment time
 		vtime = dt * iframe;
@@ -108,6 +198,7 @@ int main(void)
 		// Draw
 		//----------------------------------------------------------------------------------
 		BeginTextureMode(target);    // Enable drawing to texture
+			// TODO: parameterize bg color
 			ClearBackground(WHITE);
 
 			// Draw a rectangle in shader mode to be used as shader canvas
@@ -128,7 +219,7 @@ int main(void)
 				DrawTextureEx(target.texture, (Vector2){ 0.0f, 0.0f }, 0.0f, 1.0f, WHITE);
 			EndShaderMode();
 
-			if (showControls)
+			if (show_controls)
 			{
 				DrawText("Press F1 to toggle these controls", 10, 30, 10, RAYWHITE);
 				DrawText("Press SPACE restart animation", 10, 45, 10, RAYWHITE);
@@ -136,41 +227,64 @@ int main(void)
 		EndDrawing();
 		//----------------------------------------------------------------------------------
 
+		// TODO: add a "dry run" mode that skips ffmpeg export and only renders
+		// to screen.  Also skip ffmpeg init and cleanup
+
 		//if (iframe == 30)
 		if (true)
 		{
 			// Save frame in memory -- faster than disk
 			Image image = LoadImageFromScreen();
 
+			if (iframe == NFRAMES / 2)
+			{
+				bool io = ExportImage(image, outimg);
+			}
+
 			int w = image.width;
 			int h = image.height;
 
-			// Convert pixel format
+			// Convert pixel format.  TODO: is yuv420 available in raylib?  Then
+			// we could skip an extra transcoding step
 			ImageFormat(&image, PIXELFORMAT_UNCOMPRESSED_R8G8B8);
 			//ImageFormat(&image, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
 
 			// Write the raw pixels to the ffmpeg pipe
-			if (avconv)
+			if (ffmpeg)
 			{
 				const int PIXEL_BYTES = 3;
-				fwrite(image.data, screenWidth * screenHeight * PIXEL_BYTES, 1, avconv);
+				fwrite(image.data, WIDTH * HEIGHT * PIXEL_BYTES, 1, ffmpeg);
 			}
 		}
 
-		if (iframe == 600) break;
-		//if (iframe == 600) CloseWindow();
+		if (iframe == NFRAMES)
+		//if (iframe == NFRAMES - 1)
+		{
+			normal_close = true;
+			break;
+		}
 	}
 
-	/* ffmpeg video cleanup */
-	if (avconv)
-		pclose(avconv);
-
-	// Raylib de-initialization
+	// raylib de-initialization
 	UnloadShader(shader);
 	UnloadRenderTexture(target);
-
 	CloseWindow();
+	printf("\n");
 
+	// ffmpeg video cleanup
+	if (ffmpeg)
+	{
+		pclose(ffmpeg);
+		printf("\n");
+		printf(GREEN_ANSI "Successfully created video \"%s\"\n" RESET_ANSI, outfile);
+	}
+
+	if (!normal_close)
+	{
+		printf(WARNING "Graphics window closed abnormally\n" RESET_ANSI);
+	}
+
+	printf(GREEN_ANSI "Finished " ME "\n" RESET_ANSI);
 	return 0;
 }
 
