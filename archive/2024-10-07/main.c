@@ -94,7 +94,7 @@ int main(void)
 	// Initialize
 	//
 	// TODO: put videos in subdir
-	avconv = popen(TextFormat("ffmpeg -y -f rawvideo -s %dx%d -pix_fmt rgb24 -r %d -i - -an -pix_fmt yuv420p jaylib-3.mp4", screenWidth, screenHeight, FPS), "w");
+	avconv = popen(TextFormat("ffmpeg -y -f rawvideo -s %dx%d -pix_fmt rgb24 -r %d -i - -an -pix_fmt yuv420p jaylib-2.mp4", screenWidth, screenHeight, FPS), "w");
 
 	//--------------------------------------------------------------------------------------
 
