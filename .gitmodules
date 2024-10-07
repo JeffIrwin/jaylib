@@ -1,0 +1,3 @@
+[submodule "submodules/raylib"]
+	path = submodules/raylib
+	url = https://github.com/JeffIrwin/raylib

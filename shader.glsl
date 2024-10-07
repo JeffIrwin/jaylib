@@ -63,11 +63,6 @@ void main()
 	for (int i = 0; i < NLAYERS; i++)
 	{
 		float y_thresh = normal_dist(
-				//x - x_trans[i] - speeds[i] * vtime,
-				//x - speeds[i] * vtime - x_trans[i],
-				//mod(x - speeds[i] * vtime - 3.f, 6.f) - x_trans[i] + 3.f,
-				//mod(x - x_trans[i] - speeds[i] * vtime - 3.f, 6.f) + 3.f,
-				//wrap(x - speeds[i] * vtime, -3.f, 3.f) - x_trans[i],
 				wrap(x - speeds[i] * vtime - x_trans[i], -2.f, 2.f),
 				mu,
 				sigmas[i])
@@ -76,6 +71,7 @@ void main()
 		bool below = y < y_thresh;
 		if (below)
 		{
+			// TODO: apply some (hue?) shading depending on distance from thresh
 			finalColor = get_color(palette[i]);
 			return;
 		}
