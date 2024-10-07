@@ -42,8 +42,10 @@ int main(void)
 	size_t len = slash - this_file;
 	printf("len = %d\n", len);
 
-	char* this_dir = malloc(len);
-	strncpy(this_dir, this_file, len);
+	char* this_dir = malloc(len + 1);
+	//strncpy(this_dir, this_file, len + 1);
+	*this_dir = '\0';
+	strncat(this_dir, this_file, len);
 
 	char* shader_file = TextFormat("%s/shader.glsl", this_dir);
 
