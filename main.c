@@ -236,8 +236,11 @@ int main(void)
 			// Save frame in memory -- faster than disk
 			Image image = LoadImageFromScreen();
 
+			//if (true)
 			if (iframe == NFRAMES / 2)
 			{
+				//const char* outimgi  = TextFormat("%s/%s--%s--%d.png", outdir_img, ME, date, iframe);
+				//bool io = ExportImage(image, outimgi);
 				bool io = ExportImage(image, outimg);
 			}
 
@@ -257,8 +260,9 @@ int main(void)
 			}
 		}
 
+		//if (iframe == NFRAMES + 1)
 		if (iframe == NFRAMES)
-		//if (iframe == NFRAMES - 1)
+		//if (iframe == NFRAMES - 10)
 		{
 			normal_close = true;
 			break;

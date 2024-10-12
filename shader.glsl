@@ -60,11 +60,11 @@ void main()
 
 	//float y_scales[NLAYERS] = float[](0.45f, 0.45f, 0.45f, 0.45f, 0.45f);
 	float y_scales[NLAYERS] = float[](
-			0.45 * (0.4 * sin(vtime * (2 * pi) / 10 + 0 * pi / 5) + 0.6) ,
-			0.45 * (0.4 * sin(vtime * (2 * pi) /  5 + 2 * pi / 5) + 0.6) ,
-			0.45 * (0.4 * sin(vtime * (2 * pi) / 10 + 4 * pi / 5) + 0.6) ,
-			0.45 * (0.4 * sin(vtime * (2 * pi) /  5 + 6 * pi / 5) + 0.6) ,
-			0.45 * (0.4 * sin(vtime * (2 * pi) / 10 + 8 * pi / 5) + 0.6)
+			1.2 * (0.4 * sin(vtime * (2 * pi) / 10 + 0 * pi / 5) + 0.6) ,
+			1.2 * (0.4 * sin(vtime * (2 * pi) /  5 + 2 * pi / 5) + 0.6) ,
+			1.2 * (0.4 * sin(vtime * (2 * pi) / 10 + 4 * pi / 5) + 0.6) ,
+			1.2 * (0.4 * sin(vtime * (2 * pi) /  5 + 6 * pi / 5) + 0.6) ,
+			1.2 * (0.4 * sin(vtime * (2 * pi) / 10 + 8 * pi / 5) + 0.6)
 		);
 
 	//float speeds [NLAYERS] = float[](1.2f, -0.8f ,  0.4f, -0.4f);
@@ -72,19 +72,23 @@ void main()
 
 	// There's an extra palette entry for the stationary background layer
 
-	int palette[NLAYERS+1] = int[](0xCAF0F8, 0x90E0EF, 0x00B4D8, 0x0077B6, 0x03045E, 0xCAF0F8);
+	//int palette[NLAYERS+1] = int[](0xCAF0F8, 0x90E0EF, 0x00B4D8, 0x0077B6, 0x03045E, 0xCAF0F8);
 	//int palette[NLAYERS+1] = int[](0x03045E, 0x0077B6, 0x00B4D8, 0x90E0EF, 0xCAF0F8, 0x03045E);
 	//int palette[NLAYERS+1] = int[](0xD8E2DC, 0xFFFFFF, 0xFFCAD4, 0xF4ACB7, 0x9D8189, 0xD8E2DC);
 	//int palette[NLAYERS+1] = int[](0x0A9396, 0x94D2BD, 0xE9D8A6, 0xEE9B00, 0xCA6702, 0xBB3E03);
+
+	//int palette[NLAYERS+1] = int[](0xCDB4DB, 0xFFC8DD, 0xFFAFCC, 0xBDE0FE, 0xA2D2FF, 0xCDB4DB);
+	int palette[NLAYERS+1] = int[](0xA2D2FF, 0xCDB4DB, 0xFFC8DD, 0xFFAFCC, 0xBDE0FE, 0xA2D2FF);
 	//int palette[NLAYERS+1] = int[](0xCDB4DB, 0xFFC8DD, 0xFFAFCC, 0xBDE0FE, 0xA2D2FF);
 
 	//vec4 BORDER = get_color(0x000000);
-	vec4 BORDER = get_color(0x444444);
+	//vec4 BORDER = get_color(0x444444);
+	vec4 BORDER = get_color(0xFFFFFF);
 
 	for (int i = 0; i < NLAYERS; i++)
 	{
-		//float y_thresh = normal_dist(
-		float y_thresh = triangle_dist(
+		float y_thresh = normal_dist(
+		//float y_thresh = triangle_dist(
 				wrap(x - speeds[i] * vtime - x_trans[i], -2.f, 2.f),
 				mu,
 				sigmas[i])
