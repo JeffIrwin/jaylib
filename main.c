@@ -75,46 +75,42 @@ void DrawPlaneXY(Vector3 centerPos, Vector2 size, Color color)
 	//
 	// Alternatively, this could be implementing by pushing mat, rlRotatef, and
 	// then calling raylib's DrawPlane (XZ)
-    rlPushMatrix();
-        rlTranslatef(centerPos.x, centerPos.y, centerPos.z);
-        rlScalef(size.x, size.y, 1.0f);
+	rlPushMatrix();
+	rlTranslatef(centerPos.x, centerPos.y, centerPos.z);
+	rlScalef(size.x, size.y, 1.0f);
 
-        rlBegin(RL_QUADS);
-            rlColor4ub(color.r, color.g, color.b, color.a);
-            rlNormal3f(0.0f, 0.0f, 1.0f);
+	rlBegin(RL_QUADS);
+		rlColor4ub(color.r, color.g, color.b, color.a);
+		rlNormal3f(0.0f, 0.0f, 1.0f);
 
-            rlVertex3f(-0.5f,  0.5f, 0.0f);
-            rlVertex3f(-0.5f, -0.5f, 0.0f);
-            rlVertex3f( 0.5f, -0.5f, 0.0f);
-            rlVertex3f( 0.5f,  0.5f, 0.0f);
-        rlEnd();
-    rlPopMatrix();
+		rlVertex3f(-0.5f,  0.5f, 0.0f);
+		rlVertex3f(-0.5f, -0.5f, 0.0f);
+		rlVertex3f( 0.5f, -0.5f, 0.0f);
+		rlVertex3f( 0.5f,  0.5f, 0.0f);
+	rlEnd();
+	rlPopMatrix();
 }
 
 void DrawGridXY(int slices, float spacing)
 {
 	// Draw a grid centered at (0, 0, 0)
-    int halfSlices = slices/2;
+	int halfSlices = slices/2;
 
-    rlBegin(RL_LINES);
-        for (int i = -halfSlices; i <= halfSlices; i++)
-        {
-            if (i == 0)
-            {
-                rlColor3f(0.5f, 0.5f, 0.5f);
-            }
-            else
-            {
-                rlColor3f(0.75f, 0.75f, 0.75f);
-            }
+	rlBegin(RL_LINES);
+	for (int i = -halfSlices; i <= halfSlices; i++)
+	{
+		if (i == 0)
+			rlColor3f(0.5f, 0.5f, 0.5f);
+		else
+			rlColor3f(0.75f, 0.75f, 0.75f);
 
-            rlVertex3f((float)i*spacing, (float)-halfSlices*spacing, 0.0f);
-            rlVertex3f((float)i*spacing, (float) halfSlices*spacing, 0.0f);
+		rlVertex3f((float)i*spacing, (float)-halfSlices*spacing, 0.0f);
+		rlVertex3f((float)i*spacing, (float) halfSlices*spacing, 0.0f);
 
-            rlVertex3f((float)-halfSlices*spacing, (float)i*spacing, 0.0f);
-            rlVertex3f((float) halfSlices*spacing, (float)i*spacing, 0.0f);
-        }
-    rlEnd();
+		rlVertex3f((float)-halfSlices*spacing, (float)i*spacing, 0.0f);
+		rlVertex3f((float) halfSlices*spacing, (float)i*spacing, 0.0f);
+	}
+	rlEnd();
 }
 
 //==============================================================================
@@ -125,7 +121,6 @@ Color IntToColor(int hex)
 	int r = (hex / 256 / 256) % 256;
 	int g = (hex / 256      ) % 256;
 	int b = (hex            ) % 256;
-	//return vec4(r / 255.0f, g / 255.0f, b / 255.0f, 1.0f);
 	return (Color) {r, g, b, 0xff};
 }
 
@@ -197,7 +192,7 @@ int main(void)
 	if (!ready)
 	{
 		printf(
-				ERROR 
+				ERROR
 				"cannot compile shader program from files \"%s\" and \"%s\"\n"
 				RESET_ANSI,
 				vertex___file, fragment_file
@@ -209,10 +204,10 @@ int main(void)
 
 	// Get some required shader locations
 	shader.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation(shader, "viewPos");
-	// NOTE: "matModel" location name is automatically assigned on shader loading, 
+	// NOTE: "matModel" location name is automatically assigned on shader loading,
 	// no need to get the location again if using that uniform name
 	//shader.locs[SHADER_LOC_MATRIX_MODEL] = GetShaderLocation(shader, "matModel");
-	
+
 	// Ambient light level (some basic lighting)
 	int ambientLoc = GetShaderLocation(shader, "ambient");
 	SetShaderValue(shader, ambientLoc, (float[4]){ 0.1f, 0.1f, 0.1f, 1.0f }, SHADER_UNIFORM_VEC4);
@@ -284,51 +279,37 @@ int main(void)
 		//****************
 		BeginDrawing();
 
-			//ClearBackground(BLACK);
 			ClearBackground((Color) {50, 50, 80, 0});
 
-			//Rectangle rect = (Rectangle) {-1, -1, 2, 2};
 			Rectangle rect = (Rectangle) {0, 0, WIDTH, HEIGHT};
 
-//RLAPI void DrawRectangleGradientEx(Rectangle rec, Color topLeft, Color bottomLeft, Color topRight, Color bottomRight); // Draw a gradient-filled rectangle with custom vertex colors
-
-			//const Color BG_COLOR_1 = BLUE;
-			//const Color BG_COLOR_2 = RED;
-			//const Color BG_COLOR_1 = (Color) {30, 10, 120, 0xff};
-			//const Color BG_COLOR_2 = (Color) {120, 10, 30, 0xff};
 			const Color BG_COLOR_1 = IntToColor(0x443377);
 			const Color BG_COLOR_2 = IntToColor(0x773344);
 
-			//BeginShaderMode(shader);
 			const Color BG_COLOR_MID = ColorLerp(BG_COLOR_1, BG_COLOR_2, 0.5);
 			DrawRectangleGradientEx(
-					rect, 
+					rect,
 					BG_COLOR_1, BG_COLOR_MID, BG_COLOR_MID, BG_COLOR_2
 			);
-			//DrawRectangle(rect, BLACK, GRAY, GRAY, WHITE);
-			//EndShaderMode();
 
 			BeginMode3D(camera);
+			BeginShaderMode(shader);
 
-				BeginShaderMode(shader);
+				DrawPlaneXY(Vector3Zero(), (Vector2) { 10.0, 10.0 }, WHITE);
 
-					DrawPlaneXY(Vector3Zero(), (Vector2) { 10.0, 10.0 }, WHITE);
+				rlPushMatrix();
 
-					rlPushMatrix();
+				rlTranslatef(0, 0, 1.7);
 
-					rlTranslatef(0, 0, 1.7);
+				rlRotatef(360 * vtime / DURATION, -1, 0, 0);
+				rlRotatef(360 * vtime / DURATION, 0, 0, 1);
 
-					rlRotatef(360 * vtime / DURATION, -1, 0, 0);
-					rlRotatef(360 * vtime / DURATION, 0, 0, 1);
+				DrawCube(Vector3Zero(), 2.0, 2.0, 2.0, WHITE);
 
-					DrawCube(Vector3Zero(), 2.0, 2.0, 2.0, WHITE);
+				rlPopMatrix();
 
-					rlPopMatrix();
-
-				EndShaderMode();
-
-				DrawGridXY(10, 1.0f);
-
+			EndShaderMode();
+			DrawGridXY(10, 1.0f);
 			EndMode3D();
 
 		EndDrawing();
