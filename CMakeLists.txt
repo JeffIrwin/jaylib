@@ -5,11 +5,9 @@ project(jaylib)
 # Maybe set the date as a -D def and pass to main.c to override usual get_date()
 # method?
 set(SRC_DIR "./archive/2024-10-05/")
-set(SRC_DIR "./archive/2024-10-06/")
-set(SRC_DIR "./archive/2024-10-07/")
-set(SRC_DIR "./archive/2024-10-12/")
 set(SRC_DIR "./archive/2024-10-13/")
-set(SRC_DIR ".")
+#set(SRC_DIR "./archive/2024-10-14/")
+#set(SRC_DIR ".")
 
 # generate compile_commands.json
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
