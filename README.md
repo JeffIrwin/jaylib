@@ -16,7 +16,11 @@ and `sudo apt install -y` until it works.
 - various x11 and related libraries
 - cmake
 
-Raylib at least is automatically fetched via cmake
+Raylib is included from source as a submodule.  Either clone recursively or
+update submodules after cloning.
+
+ffmpeg is only needed to save videos.  You should still be able to render to
+your screen by deleting any ffmpeg references in the code.
 
 ## Run
 
@@ -31,8 +35,10 @@ To run one of the archived shaders, set `SRC_DIR` in
 ```
 set(SRC_DIR "./archive/2024-10-05/")
 ```
+Either set this at the end of the block, or comment-out any re-setting of
+`SRC_DIR` below.
 
-To run the top-level source `main.c` (and `shader.glsl` and its other dependencies), set
+To run the top-level source `main.c` (and the shader `*.glsl` and its other dependencies), set
 `SRC_DIR` to `"."`:
 ```
 set(SRC_DIR ".")
