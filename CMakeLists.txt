@@ -6,7 +6,8 @@ project(jaylib)
 # method?
 set(SRC_DIR "./archive/2024-10-05/")
 set(SRC_DIR "./archive/2024-10-13/")
-#set(SRC_DIR "./archive/2024-10-14/")
+set(SRC_DIR "./archive/2024-10-14/")
+set(SRC_DIR "./archive/2024-10-19/")
 #set(SRC_DIR ".")
 
 # generate compile_commands.json

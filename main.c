@@ -7,10 +7,15 @@
 #include <time.h>
 
 #include "raylib.h"
+#include "raymath.h"
+#include "rlgl.h"
+
+#define RLIGHTS_IMPLEMENTATION
+#include "rlights.h"
 
 // Toggle between 0 (false) and 1 (true)
 #define HI_RES \
-1
+0
 
 #if HI_RES
 	// Somewhere between 1400 and 1440, threads.net compression will kick in and
@@ -48,7 +53,11 @@
 #define WARNING YELLOW_ANSI "Warning: "
 #define ERROR RED_ANSI "Error: "
 
-//****************
+const float pi = 3.14159265359;
+
+//==============================================================================
+
+float vtime = 0.f;  // virtual time (not real, ticks up predictably regardless of perf)
 
 //==============================================================================
 
@@ -56,20 +65,124 @@ char* get_date()
 {
 	// Return date in format "yyyy-mm-dd" (%F)
 	const size_t len = 16;//32;
-
-	//char buffer[80];
-	//char buffer[32];
 	char* buffer = malloc(len);
-
 	time_t rawtime;
 	struct tm *timeinfo;
 	time(&rawtime);
 	timeinfo = localtime(&rawtime);
-	//printf("size = %d\n", sizeof(buffer));
 	strftime(buffer, len, "%F", timeinfo);
-
-	//printf("buffer = %s\n", buffer);
 	return buffer;
+}
+
+//==============================================================================
+void DrawPlaneXY(Vector3 centerPos, Vector2 size, Color color)
+{
+	// Draw a plane
+	//
+	// Alternatively, this could be implementing by pushing mat, rlRotatef, and
+	// then calling raylib's DrawPlane (XZ)
+	rlPushMatrix();
+	rlTranslatef(centerPos.x, centerPos.y, centerPos.z);
+	rlScalef(size.x, size.y, 1.0f);
+
+	rlBegin(RL_QUADS);
+		rlColor4ub(color.r, color.g, color.b, color.a);
+		rlNormal3f(0.0f, 0.0f, 1.0f);
+
+		rlVertex3f(-0.5f,  0.5f, 0.0f);
+		rlVertex3f(-0.5f, -0.5f, 0.0f);
+		rlVertex3f( 0.5f, -0.5f, 0.0f);
+		rlVertex3f( 0.5f,  0.5f, 0.0f);
+	rlEnd();
+	rlPopMatrix();
+}
+
+void DrawGridXY(int slices, float spacing)
+{
+	// Draw a grid centered at (0, 0, 0)
+	int halfSlices = slices/2;
+
+	rlBegin(RL_LINES);
+	for (int i = -halfSlices; i <= halfSlices; i++)
+	{
+		if (i == 0)
+			rlColor3f(0.5f, 0.5f, 0.5f);
+		else
+			rlColor3f(0.75f, 0.75f, 0.75f);
+
+		rlVertex3f((float)i*spacing, (float)-halfSlices*spacing, 0.0f);
+		rlVertex3f((float)i*spacing, (float) halfSlices*spacing, 0.0f);
+
+		rlVertex3f((float)-halfSlices*spacing, (float)i*spacing, 0.0f);
+		rlVertex3f((float) halfSlices*spacing, (float)i*spacing, 0.0f);
+	}
+	rlEnd();
+}
+
+//==============================================================================
+
+Color IntToColor(int hex)
+{
+	// c.f. raylib's ColorToInt()
+	int r = (hex / 256 / 256) % 256;
+	int g = (hex / 256      ) % 256;
+	int b = (hex            ) % 256;
+	return (Color) {r, g, b, 0xff};
+}
+
+//==============================================================================
+
+void recurse
+(
+		float xmin, float xmax,
+		float ymin, float ymax,
+		size_t count, size_t depth,
+		bool even
+)
+{
+	const int MAX_DEPTH = 7;
+	if (depth > MAX_DEPTH) return;
+	//printf("count = %d\n", count);
+
+	even = !even;
+	depth += 1;
+
+	float xmid = 0.5 * (xmin + xmax) + 0.1 * (xmax - xmin) * cos(2*pi*vtime/10 + depth);
+	float ymid = 0.5 * (ymin + ymax) + 0.1 * (ymax - ymin) * cos(2*pi*vtime/10 + depth);
+
+	if (even)
+	{
+		count += 1;
+		recurse(xmin, xmid,  ymin, ymax,  count, depth, even);
+		count += 1;
+		recurse(xmid, xmax,  ymin, ymax,  count, depth, even);
+	}
+	else
+	{
+		count += 1;
+		recurse(xmin, xmax,  ymin, ymid,  count, depth, even);
+		count += 1;
+		recurse(xmin, xmax,  ymid, ymax,  count, depth, even);
+	}
+
+	if (depth != MAX_DEPTH) return;
+
+	float dx = xmax - xmin - 0.1;
+	float dy = ymax - ymin - 0.1;
+
+	int palette[] = {0xA2D2FF, 0xCDB4DB, 0xFFC8DD, 0xFFAFCC, 0xBDE0FE};
+	size_t npalette = sizeof(palette) / sizeof(palette[0]);
+	//printf("npalette = %d\n", npalette);
+	Color color = IntToColor(palette[count % npalette]);
+	//printf("color = %x %x %x\n", color.r, color.g, color.b);
+
+	float dzs[] = {1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6};
+	size_t ndz = sizeof(dzs) / sizeof(dzs[0]);
+	float dz = dzs[count % ndz];
+	//float dz = 1.0;
+
+	//DrawCube(Vector3Zero(), 2.0, 2.0, 2.0, WHITE);
+	DrawCube((Vector3) {xmid, ymid, 0.5 * dz}, dx, dy, dz, color);
 }
 
 //==============================================================================
@@ -83,10 +196,21 @@ int main(void)
 	printf("Current date = %s\n", date);
 	printf("\n");
 
+	SetConfigFlags(FLAG_MSAA_4X_HINT);  // Enable Multi Sampling Anti Aliasing 4x (if available)
 	InitWindow(WIDTH, HEIGHT, ME);
 
-	// Load shader file relative to the path of this C source file.  This will
-	// break if you compile and then move the shader
+	// Define the camera to look into our 3d world
+	//
+	// Y-up
+	Camera camera = { 0 };
+	camera.position = (Vector3){ -2.0f, -3.0, 10.0f };     // Camera position
+	camera.target = (Vector3){ 0.0f, 0.0f, 0.f };      // Camera looking at point
+	camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
+	camera.fovy = 32.0f;                                // Camera field-of-view Y
+	camera.projection = CAMERA_PERSPECTIVE;             // Camera projection type
+
+	// Load shader file(s) relative to the path of this C source file.  This
+	// will break if you compile and then move the shader
 
 	char* this_file = __FILE__;
 	char* slash = strrchr(this_file, '/');
@@ -98,22 +222,28 @@ int main(void)
 	*this_dir = '\0';
 	strncat(this_dir, this_file, len);
 
-	const char* shader_file = TextFormat("%s/shader.glsl", this_dir);
+	const char* fragment_file = TextFormat("%s/fragment.glsl", this_dir);
+	const char* vertex___file = TextFormat("%s/vertex.glsl"  , this_dir);
 
 	printf("this_dir = %s\n", this_dir);
-	printf("shader_file = %s\n", shader_file);
+	printf("fragment_file = %s\n", fragment_file);
 	printf("\n");
 
-	char* shader_text = LoadFileText(shader_file);
-	if (shader_text == NULL)
+	char* fragment_text = LoadFileText(fragment_file);
+	if (fragment_text == NULL)
 	{
-		printf(ERROR "cannot load shader file \"%s\"\n" RESET_ANSI, shader_file);
+		printf(ERROR "cannot load shader file \"%s\"\n" RESET_ANSI, fragment_file);
 		return EXIT_FAILURE;
 	}
 
-	//// LoadShader() does not throw an error if shader_file does not exist
-	//Shader shader = LoadShader(0, shader_file);
-	Shader shader = LoadShaderFromMemory(0, shader_text);
+	char* vertex___text = LoadFileText(vertex___file);
+	if (vertex___text == NULL)
+	{
+		printf(ERROR "cannot load shader file \"%s\"\n" RESET_ANSI, vertex___file);
+		return EXIT_FAILURE;
+	}
+
+	Shader shader = LoadShaderFromMemory(vertex___text, fragment_text);
 
 	printf("shader id = %d\n", shader.id);
 
@@ -122,36 +252,48 @@ int main(void)
 	printf("shader ready = %d\n", ready);
 	if (!ready)
 	{
-		printf(ERROR "cannot compile shader program from file \"%s\"\n" RESET_ANSI, shader_file);
+		printf(
+				ERROR
+				"cannot compile shader program from files \"%s\" and \"%s\"\n"
+				RESET_ANSI,
+				vertex___file, fragment_file
+		);
 		return EXIT_FAILURE;
 	}
 
-	//return 0;
+	// Get some required shader locations
+	shader.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation(shader, "viewPos");
+	// NOTE: "matModel" location name is automatically assigned on shader loading,
+	// no need to get the location again if using that uniform name
+	//shader.locs[SHADER_LOC_MATRIX_MODEL] = GetShaderLocation(shader, "matModel");
 
-	// Create a RenderTexture2D to be used for render to texture
-	RenderTexture2D target = LoadRenderTexture(GetScreenWidth(), GetScreenHeight());
+	// Ambient light level (some basic lighting)
+	int ambientLoc = GetShaderLocation(shader, "ambient");
+	SetShaderValue(shader, ambientLoc, (float[4]){ 0.01f, 0.01f, 0.01f, 1.0f }, SHADER_UNIFORM_VEC4);
 
-	float vtime = 0.f;  // virtual time (not real, ticks up predictably regardless of perf)
+	// Create lights
+	Light lights[MAX_LIGHTS] = { 0 };
 
-	// Get variable (uniform) locations on the shader to connect with the program
-	// NOTE: If uniform variable could not be found in the shader, function returns -1
-	int vtimeLoc = GetShaderLocation(shader, "vtime");
+	lights[0] = CreateLight(LIGHT_POINT, (Vector3){3, 1, 5}, Vector3Zero(), WHITE, shader);
 
-	// Upload the shader uniform values
-	SetShaderValue(shader, vtimeLoc, &vtime, SHADER_UNIFORM_FLOAT);
+	//lights[0] = CreateLight(LIGHT_POINT, (Vector3){  3, 1.0, 5 }, Vector3Zero(), BLUE , shader);
+	//lights[1] = CreateLight(LIGHT_POINT, (Vector3){ -3, 1.5, 5 }, Vector3Zero(), RED  , shader);
+	//lights[2] = CreateLight(LIGHT_POINT, (Vector3){  3, 1.0, 5 }, Vector3Zero(), RED  , shader);
+	//lights[3] = CreateLight(LIGHT_POINT, (Vector3){ -3, 1.5, 5 }, Vector3Zero(), RED  , shader);
 
-	bool show_controls = false;
+	//****************
+
 	bool normal_close  = false;
 
 	SetTargetFPS(FPS);
-
 	float dt = 1.f / FPS;
 	printf("dt = %e\n", dt);
 	size_t iframe = 0;
 
-	const size_t NFRAMES = 10 * FPS;
+	const size_t DURATION = 10;  // video length (s)
+	const size_t NFRAMES = DURATION * FPS;
 
-	//--------------------------------------------------------------------------------------
+	//****************
 
 	const char* outdir     = "videos";
 	const char* outdir_img = "screenshots";
@@ -181,51 +323,57 @@ int main(void)
 			outfile
 	), "w");
 
-	//--------------------------------------------------------------------------------------
+	//****************
 
-	// Main loop
-	while (!WindowShouldClose())
+	// Main game loop
+	while (!WindowShouldClose())        // Detect window close button or ESC key
 	{
-		if (IsKeyPressed(KEY_SPACE)) iframe = 0;  // re-start animation
-		if (IsKeyPressed(KEY_F1)) show_controls = !show_controls;  // toggle whether or not to show controls
-
 		// Increment time
 		vtime = dt * iframe;
 		iframe += 1;
-		//printf("vtime = %e\n", vtime);
-		SetShaderValue(shader, vtimeLoc, &vtime, SHADER_UNIFORM_FLOAT);
+
+		// Update the shader with the camera view vector
+		float cameraPos[3] = { camera.position.x, camera.position.y, camera.position.z };
+		SetShaderValue(shader, shader.locs[SHADER_LOC_VECTOR_VIEW], cameraPos, SHADER_UNIFORM_VEC3);
 
 		// Draw
-		//----------------------------------------------------------------------------------
-		BeginTextureMode(target);    // Enable drawing to texture
-			// TODO: parameterize bg color
-			ClearBackground(WHITE);
-
-			// Draw a rectangle in shader mode to be used as shader canvas
-			// NOTE: Rectangle uses font white character texture coordinates,
-			// so shader can not be applied here directly because input vertexTexCoord
-			// do not represent full screen coordinates (space where want to apply shader)
-			DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), WHITE);
-		EndTextureMode();
-
+		//****************
 		BeginDrawing();
-			ClearBackground(WHITE);
 
-			// Draw the saved texture
-			// NOTE: We do not invert texture on Y, already considered inside shader
+			//ClearBackground((Color) {50, 50, 80, 0});
+			ClearBackground(IntToColor( 0x222222 ));
+
+			//// Gradient background
+			//Rectangle rect = (Rectangle) {0, 0, WIDTH, HEIGHT};
+			//const Color BG_COLOR_1 = IntToColor(0x443377);
+			//const Color BG_COLOR_2 = IntToColor(0x773344);
+			//const Color BG_COLOR_MID = ColorLerp(BG_COLOR_1, BG_COLOR_2, 0.5);
+			//DrawRectangleGradientEx(
+			//		rect,
+			//		BG_COLOR_1, BG_COLOR_MID, BG_COLOR_MID, BG_COLOR_2
+			//);
+
+			BeginMode3D(camera);
 			BeginShaderMode(shader);
-				// WARNING: If FLAG_WINDOW_HIGHDPI is enabled, HighDPI monitor scaling should be considered
-				// when rendering the RenderTexture2D to fit in the HighDPI scaled Window
-				DrawTextureEx(target.texture, (Vector2){ 0.0f, 0.0f }, 0.0f, 1.0f, WHITE);
-			EndShaderMode();
 
-			if (show_controls)
-			{
-				DrawText("Press F1 to toggle these controls", 10, 30, 10, RAYWHITE);
-				DrawText("Press SPACE restart animation", 10, 45, 10, RAYWHITE);
-			}
+				//DrawPlaneXY(Vector3Zero(), (Vector2) { 10.0, 10.0 }, WHITE);
+				//rlPushMatrix();
+				//rlTranslatef(0, 0, 1.7);
+				//rlRotatef(360 * vtime / DURATION, -1, 0, 0);
+				//rlRotatef(360 * vtime / DURATION, 0, 0, 1);
+				//DrawCube(Vector3Zero(), 2.0, 2.0, 2.0, WHITE);
+				//rlPopMatrix();
+
+				recurse(-2.5, 2.5,  -2.5, 2.5,  0, 0, true);
+				//recurse(-1, 1,  -1, 1,  0, 0, true);
+				////recurse(-1.f, 1.f,  -1.f, 1.f,  0, 0, true);
+
+			EndShaderMode();
+			//DrawGridXY(10, 1.0f);
+			EndMode3D();
+
 		EndDrawing();
-		//----------------------------------------------------------------------------------
+		//****************
 
 		// TODO: add a "dry run" mode that skips ffmpeg export and only renders
 		// to screen.  Also skip ffmpeg init and cleanup
@@ -262,7 +410,7 @@ int main(void)
 
 		//if (iframe == NFRAMES + 1)
 		if (iframe == NFRAMES)
-		//if (iframe == NFRAMES - 10)
+		//if (iframe == NFRAMES - 1)
 		{
 			normal_close = true;
 			break;
@@ -271,7 +419,7 @@ int main(void)
 
 	// raylib de-initialization
 	UnloadShader(shader);
-	UnloadRenderTexture(target);
+	//UnloadRenderTexture(target);
 	CloseWindow();
 	printf("\n");
 
